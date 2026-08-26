@@ -84,9 +84,11 @@ The description is written to fire on indirect phrasings too — "my form", "am 
 actually improving or is it just the weather". Or invoke it explicitly with
 `/coros-perf`.
 
-> **Note.** The skill itself is written in French, and so is the page it
-> produces. Claude will happily follow it and answer you in English — but if you
-> want the output page in English, say so and it will adapt the template.
+The skill is written in French, and so is the page template. That is not a
+barrier: ask for the page in English and Claude will translate it as it builds —
+about 550 words and 20 strings, most of it prose in the "Method" panel. The
+[skill file](SKILL.md) lists the three spots worth checking afterwards (month
+names, the faster/slower wording, decimal separators).
 
 ---
 

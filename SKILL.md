@@ -164,6 +164,22 @@ Découpage sur la nature de l'effort : continu (`anaerobic_te < 2`) contre
 fractionné. C'est le seul critère stable — voir `references/pieges.md` pour les
 découpages par intensité et par durée, essayés et rejetés, avec leurs symptômes.
 
+## Produire la page dans une autre langue
+
+Le gabarit est en français, mais rien n'y est figé : traduire les chaînes en
+place suffit — environ 550 mots et 20 chaînes JS, dont 88 % dans le panneau
+« Méthode ». Trois endroits se ratent facilement parce qu'ils ne sont pas dans
+le texte visible :
+
+- le tableau `MONTHS`, codé en dur dans le script pour l'axe des dates ;
+- `effTxt`, qui construit « X s/km plus rapide » en accolant les mots : l'ordre
+  ne survit pas à une traduction mot à mot (« X s/km faster ») ;
+- les décimales écrites à la française dans le texte de méthode (`0,84`), alors
+  que les valeurs calculées sortent déjà avec un point.
+
+Traduire aussi le `<title>` et le `lang` implicite du contenu, sinon la page
+publiée garde un titre français dans l'onglet.
+
 ## Adapter à d'autres cas
 
 - **Autre période** : rien à changer, tout se déduit des dates présentes.
