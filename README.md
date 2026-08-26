@@ -57,15 +57,18 @@ elles sont fausses, et rien ne le signalera.
 
 ## Installation
 
-Copiez le dossier dans vos skills personnelles :
+Copiez la skill elle-même dans vos skills personnelles — seuls `SKILL.md`,
+`scripts/`, `references/` et `assets/` en font partie ; le reste du dépôt est de
+la documentation :
 
 ```bash
 git clone https://github.com/MaximeBedoin/coros-perf-skill.git
-cp -r coros-perf-skill ~/.claude/skills/coros-perf
+mkdir -p ~/.claude/skills/coros-perf
+cd coros-perf-skill && cp -r SKILL.md scripts references assets ~/.claude/skills/coros-perf/
 ```
 
 Ou installez le paquet [`dist/coros-perf.skill`](dist/coros-perf.skill) depuis
-Claude Code.
+Claude Code, qui contient exactement ces fichiers.
 
 Pour une équipe, placez le dossier dans `.claude/skills/` d'un dépôt : la skill
 devient disponible pour tous ceux qui y travaillent.
