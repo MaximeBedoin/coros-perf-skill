@@ -1,0 +1,16 @@
+# Données personnelles — ne jamais versionner
+data/
+*.csv
+!docs/*.csv
+perf.json
+courbe.html
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Divers
+.DS_Store
+Thumbs.db

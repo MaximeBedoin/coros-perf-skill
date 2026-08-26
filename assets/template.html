@@ -1,0 +1,614 @@
+<title>Allure corrigée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+:root{
+  --bg:#F2F5F8; --surface:#FFFFFF; --surface-2:#F7F9FB;
+  --ink:#141A21; --ink-2:#47525E; --muted:#798593;
+  --border:#DEE4EA; --border-2:#EDF1F5;
+  --corr:#1D6FC0; --raw:#B26011;
+  --t-cont:#1D6FC0; --t-frac:#B26011;
+  --band:rgba(29,111,192,.15); --band-2:rgba(178,96,17,.14); --grid:#E7ECF1;
+  --dot:#8E9AA6; --focus:#1D6FC0;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1218; --surface:#131A21; --surface-2:#182029;
+    --ink:#E9EEF3; --ink-2:#A9B5C1; --muted:#78848F;
+    --border:#26303A; --border-2:#1D262F;
+    --corr:#3E86D8; --raw:#C4842A;
+    --t-cont:#3E86D8; --t-frac:#C4842A;
+    --band:rgba(62,134,216,.20); --band-2:rgba(196,132,42,.18); --grid:#212B35;
+    --dot:#5D6975; --focus:#3E86D8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1218; --surface:#131A21; --surface-2:#182029;
+  --ink:#E9EEF3; --ink-2:#A9B5C1; --muted:#78848F;
+  --border:#26303A; --border-2:#1D262F;
+  --corr:#3E86D8; --raw:#C4842A;
+  --t-cont:#3E86D8; --t-frac:#C4842A;
+  --band:rgba(62,134,216,.20); --band-2:rgba(196,132,42,.18); --grid:#212B35;
+  --dot:#5D6975; --focus:#3E86D8;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:Archivo,"Segoe UI",system-ui,sans-serif;
+  font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:40px 24px 72px;
+  display:flex; flex-direction:column; gap:28px}
+
+/* ---------- en-tete ---------- */
+.eyebrow{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); margin:0 0 10px;
+}
+h1{
+  font-family:"Zilla Slab",Georgia,serif; font-weight:600;
+  font-size:clamp(30px,4.6vw,44px); line-height:1.1; margin:0;
+  text-wrap:balance; letter-spacing:-.01em;
+}
+.lede{margin:12px 0 0; color:var(--ink-2); max-width:64ch}
+
+/* ---------- chiffres cles ---------- */
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1px;
+  background:var(--border); border:1px solid var(--border); border-radius:3px; overflow:hidden}
+.stat{background:var(--surface); padding:18px 20px}
+.stat .k{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted)}
+.stat .v{font-family:"Zilla Slab",Georgia,serif; font-size:30px; font-weight:600;
+  line-height:1.15; margin-top:6px; font-variant-numeric:tabular-nums}
+.stat .s{font-size:12.5px; color:var(--ink-2); margin-top:3px; font-variant-numeric:tabular-nums}
+
+/* ---------- controles ---------- */
+.panel{background:var(--surface); border:1px solid var(--border); border-radius:3px}
+.ctrl-head{display:flex; justify-content:space-between; align-items:baseline;
+  gap:16px; flex-wrap:wrap; padding:16px 20px 0}
+.ctrl-title{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted)}
+.ctrls{display:flex; flex-wrap:wrap; gap:8px; padding:12px 20px 18px}
+.chk{
+  display:flex; gap:10px; align-items:flex-start; cursor:pointer;
+  border:1px solid var(--border); border-radius:3px; padding:10px 13px;
+  background:var(--surface-2); min-width:158px; flex:1 1 158px;
+  transition:border-color .15s, background .15s;
+}
+.chk:hover{border-color:var(--muted)}
+.chk:has(input:focus-visible){outline:2px solid var(--focus); outline-offset:2px}
+.chk:has(input:checked){border-color:var(--corr); background:var(--surface)}
+.chk[aria-disabled="true"]{opacity:.42; cursor:not-allowed}
+.chk input{margin:2px 0 0; accent-color:var(--corr); width:15px; height:15px; flex:none}
+.chk .lbl{font-weight:500; font-size:14px; line-height:1.3}
+.chk .eff{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted);
+  margin-top:3px; font-variant-numeric:tabular-nums}
+
+/* ---------- bascule de vue ---------- */
+.views{display:flex; gap:0; border:1px solid var(--border); border-radius:3px; overflow:hidden}
+.views button{
+  font:inherit; font-size:13px; font-weight:500; padding:7px 15px; cursor:pointer;
+  background:var(--surface-2); color:var(--ink-2); border:0;
+  border-right:1px solid var(--border); transition:background .15s,color .15s;
+}
+.views button:last-child{border-right:0}
+.views button:hover{background:var(--surface); color:var(--ink)}
+.views button[aria-pressed="true"]{background:var(--corr); color:#fff}
+.views button:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
+.lg small{color:var(--muted); font-family:"JetBrains Mono",monospace; font-size:11px}
+
+/* ---------- graphe ---------- */
+.chart-wrap{padding:4px 8px 12px; position:relative}
+svg{display:block; width:100%; height:auto; overflow:visible}
+.gridline{stroke:var(--grid); stroke-width:1}
+.axis-txt{font-family:"JetBrains Mono",monospace; font-size:11px; fill:var(--muted);
+  font-variant-numeric:tabular-nums}
+.serie-lbl{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:700}
+.legend{display:flex; gap:20px; flex-wrap:wrap; padding:14px 20px 0; align-items:center}
+.lg{display:flex; gap:8px; align-items:center; font-size:13px; color:var(--ink-2)}
+.lg i{width:22px; height:0; border-top-width:2.5px; border-top-style:solid; flex:none}
+
+.tip{
+  position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
+  background:var(--surface); border:1px solid var(--border); border-radius:3px;
+  padding:11px 13px; font-size:12.5px; min-width:186px; z-index:5;
+  box-shadow:0 6px 22px rgba(0,0,0,.13); line-height:1.5;
+}
+.tip .td{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:7px}
+.tip .tr{display:flex; justify-content:space-between; gap:18px}
+.tip .tr b{font-family:"JetBrains Mono",monospace; font-weight:500; font-variant-numeric:tabular-nums}
+.tip .sess{margin-top:9px; padding-top:8px; border-top:1px solid var(--border-2); color:var(--ink-2)}
+.tip .sess .tr{font-size:11.5px}
+
+/* ---------- methode ---------- */
+details{background:var(--surface); border:1px solid var(--border); border-radius:3px}
+summary{padding:15px 20px; cursor:pointer; font-weight:600; font-size:14px;
+  font-family:"Zilla Slab",Georgia,serif; font-size:17px}
+summary:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
+.method{padding:0 20px 22px; display:flex; flex-direction:column; gap:18px;
+  color:var(--ink-2); font-size:14px}
+.method h3{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--muted); margin:0 0 7px; font-weight:500}
+.method p{margin:0 0 8px} .method p:last-child{margin:0}
+.method code{font-family:"JetBrains Mono",monospace; font-size:12.5px;
+  background:var(--surface-2); padding:1.5px 5px; border-radius:2px; color:var(--ink)}
+.method strong{color:var(--ink); font-weight:600}
+.tbl{width:100%; border-collapse:collapse; font-size:13px}
+.tbl th,.tbl td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--border-2);
+  vertical-align:top}
+.tbl th{font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); font-weight:500}
+.tbl td:last-child{font-family:"JetBrains Mono",monospace; white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.warn{border-left:2px solid var(--raw); padding-left:14px}
+.foot{color:var(--muted); font-size:12.5px; text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">COROS &middot; <span id="period"></span> &middot; <span id="nsess"></span> sorties</p>
+    <h1>Ce que vaut ton allure, conditions mises à part</h1>
+    <p class="lede">
+      Chaque sortie est ramenée à une allure équivalente à <strong id="hrref"></strong> bpm
+      en effort continu, puis débarrassée de ce que le terrain et la météo lui ont
+      coûté ce jour-là.
+      La courbe brute est ce que la montre a enregistré ; la courbe corrigée estime
+      ce que tu aurais couru dans des conditions neutres.
+    </p>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="panel">
+    <div class="ctrl-head">
+      <div class="views" role="group" aria-label="Vue">
+        <button type="button" data-view="all" aria-pressed="true">Toutes les sorties</button>
+        <button type="button" data-view="type" aria-pressed="false">Par type de séance</button>
+      </div>
+      <span class="ctrl-title" id="totaleff"></span>
+    </div>
+    <div class="ctrls" id="ctrls"></div>
+    <div class="legend" id="legend"></div>
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 420" role="img" aria-labelledby="charttitle"></svg>
+      <p id="charttitle" hidden>Allure équivalente à fréquence cardiaque constante, brute et corrigée des facteurs environnementaux</p>
+      <div class="tip" id="tip"></div>
+    </div>
+  </section>
+
+  <details>
+    <summary>Méthode, coefficients et limites</summary>
+    <div class="method">
+      <div>
+        <h3>L'indice</h3>
+        <p>Tes sorties ne sont pas des tests maximaux : l'allure brute mesure surtout
+        l'intensité choisie ce jour-là. L'indice part donc du rapport
+        vitesse / réserve cardiaque, avec <code>%FCR = (FC − 45) / (191 − 45)</code>,
+        puis l'exprime comme l'allure que ce rapport donnerait à
+        <strong id="hrref2"></strong> bpm en effort continu. Cette référence est le
+        centre de gravité de tes séances : la placer plus haut obligerait à
+        extrapoler avec une pente incertaine.</p>
+        <p>Ce rapport porte deux biais, estimés ensemble sur tes données et retirés :</p>
+        <p>— une <strong>dérive avec l'intensité</strong> (<span id="slopetxt"></span>).
+        Elle est mécanique, pas physiologique : la relation vitesse↔FC est affine et
+        non proportionnelle, donc le rapport décroît forcément quand la FC monte.</p>
+        <p>— un <strong>gonflement par la composante anaérobie</strong>
+        (<span id="antetxt"></span>), qui rend une séance de fractionné artificiellement
+        bonne. Les deux doivent être estimés conjointement : intensité et charge
+        anaérobie sont corrélées à 0,84, et ignorer l'une biaise l'autre. Estimés
+        séparément, la pente d'intensité valait −0,17 ; conjointement, −0,95.</p>
+      </div>
+
+      <div>
+        <h3>Types de séance</h3>
+        <p>Le découpage porte sur la nature de l'effort, seul critère que tes données
+        soutiennent :</p>
+        <div class="scroll">
+          <table class="tbl">
+            <thead><tr><th>Type</th><th>Règle</th><th>Sorties</th></tr></thead>
+            <tbody id="typetbl"></tbody>
+          </table>
+        </div>
+        <p style="margin-top:10px">Deux autres découpages ont été essayés et écartés.
+        Un seuil d'<strong>intensité</strong> dérive dans le temps — ta FC moyenne baisse
+        à mesure que tu progresses, donc les séances migrent d'un groupe à l'autre et un
+        « endurance » de mars n'est plus un « endurance » d'août. Un seuil de
+        <strong>durée</strong> ne tient pas non plus : tes séances continues sont trop
+        homogènes (39 ± 10 min) pour qu'un groupe « sortie longue » dépasse une poignée
+        de séances.</p>
+      </div>
+
+      <div>
+        <h3>Corrections</h3>
+        <p>Multiplicatives et indépendantes, appliquées à la vitesse :
+        <code>v_corrigée = v_observée × f_pente × f_chaleur × f_altitude</code>.</p>
+        <div class="scroll">
+          <table class="tbl">
+            <thead><tr><th>Facteur</th><th>Source</th><th>Plage testée</th></tr></thead>
+            <tbody id="priortbl"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h3>Références</h3>
+        <p><strong>Pente</strong> — l'<em>Adjusted Pace</em> de COROS, calculé sur le profil
+        seconde par seconde, lui-même fondé sur le coût énergétique de la pente
+        (Minetti et al., 2002).</p>
+        <p><strong>Chaleur et humidité</strong> — contrainte thermique résumée par le WBGT :
+        bulbe humide par Stull (2011), température de globe par la régression de
+        Hunter &amp; Minyard (1999), combinés selon l'ISO 7243. Dégradation calée sur
+        Ely et al. (2007) pour la borne basse, sur la dérive cardiaque en chaleur
+        (~0,5–1 bpm/°C) pour la borne haute, plus pertinente ici puisque l'indice est
+        défini à fréquence cardiaque constante.</p>
+        <p><strong>Altitude</strong> — Wehrlin &amp; Hallén (2006) : baisse de VO₂max
+        d'environ 6 %/1000 m dès le niveau de la mer chez l'entraîné, atténuée parce que
+        l'effort est sous-maximal, puis par l'acclimatation sur 14 jours (calculée depuis
+        tes séjours successifs en Haute-Loire et en Ardèche).</p>
+        <p><strong>Météo</strong> — réanalyse ERA5 via Open-Meteo, horaire, interpolée au
+        milieu de chaque sortie à partir des coordonnées GPS de départ. Aucune valeur
+        manquante sur les 127 sorties.</p>
+      </div>
+
+      <div>
+        <h3>Ce que l'intervalle représente</h3>
+        <p>Il ne sort pas d'un ajustement sur tes données : la chaleur est confondue avec
+        la saison, elle-même confondue avec ta progression, donc les coefficients ne sont
+        pas identifiables à partir de tes seules sorties. Ils viennent de la littérature,
+        et la bande combine deux sources d'incertitude par Monte-Carlo
+        (<span id="nmc"></span> tirages) : les plages plausibles de ces coefficients, et un
+        bootstrap des sorties qui capture le bruit d'une séance à l'autre.</p>
+      </div>
+
+      <div class="warn">
+        <h3>Limites à garder en tête</h3>
+        <p>Intensité et charge anaérobie sont corrélées à 0,84. Leurs deux coefficients
+        sont chacun significatifs, mais on ne peut pas les démêler proprement : une part
+        de ce que l'un corrige pourrait revenir à l'autre.</p>
+        <p>Tes séjours en altitude coïncident avec l'été : les corrections d'altitude et de
+        chaleur portent en grande partie sur les mêmes sorties, et se cumulent là où elles
+        sont le moins vérifiables.</p>
+        <p>Les courbes s'arrêtent là où les séances manquent. La régression locale est
+        linéaire, donc elle extrapole volontiers : elle n'est tracée que là où au moins
+        quatre sorties pèsent réellement et qu'une séance se trouve à moins d'un noyau.</p>
+        <p>L'altitude est celle du point de départ plus la moitié du dénivelé positif — une
+        approximation du profil réel. La FC repos 45 / FC max 191 est prise pour acquise :
+        si elle a bougé, tout l'indice se décale.</p>
+      </div>
+    </div>
+  </details>
+
+  <p class="foot">Lissage par régression locale linéaire, noyau gaussien de <span id="sig"></span> jours,
+  sorties pondérées par la racine de leur durée.</p>
+</div>
+
+<script>
+const DATA = __DATA__;
+
+const M = DATA.meta;
+const S = {slope:true, heat:true, humid:true, alt:true, dots:true, view:"all"};
+
+const FACTORS = [
+  {id:"slope", lbl:"Pente",     hint:"dénivelé de la sortie"},
+  {id:"heat",  lbl:"Chaleur",   hint:"température sèche"},
+  {id:"humid", lbl:"Humidité",  hint:"passage au WBGT réel", dep:"heat"},
+  {id:"alt",   lbl:"Altitude",  hint:"hypoxie, acclimatée"},
+  {id:"dots",  lbl:"Séances",   hint:"afficher chaque sortie", plain:true},
+];
+
+const key = (s=S) => `${+s.slope}${s.heat ? (s.humid?"full":"dry") : "none"}${+s.alt}`;
+const pace = v => v==null||!isFinite(v) ? "—" : `${Math.floor(v/60)}:${String(Math.round(v)%60).padStart(2,"0")}`;
+// un ecart d'allure negatif = plus rapide ; on l'ecrit en toutes lettres plutot
+// qu'avec un signe, que l'axe inverse rend ambigu
+const effTxt = (v,u="s/km") => Math.abs(v) < 0.05 ? "sans effet"
+  : `${Math.abs(v).toFixed(1)} ${u} plus ${v<0?"rapide":"lente"}`;
+const median = a => { const s=a.filter(isFinite).sort((p,q)=>p-q);
+  return s.length ? s[Math.floor(s.length/2)] : 0; };
+
+const D0 = new Date(M.start+"T00:00:00");
+const dayDate = d => new Date(D0.getTime() + d*864e5);
+const MONTHS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+
+/* ---------- geometrie ---------- */
+const W=900, H=420, PL=52, PR=92, PT=18, PB=34;
+const IW = W-PL-PR, IH = H-PT-PB;
+
+// series tracees selon la vue : globale (brute + corrigee) ou par type
+const TYPES = M.types.map(t=>t.id);
+function plotted(){
+  const k = key();
+  return S.view==="type"
+    ? TYPES.map(id=>({id, curve:DATA.curves[k][id], color:`var(--t-${id})`,
+        label:M.types.find(t=>t.id===id).label, band:id==="cont"?"var(--band)":"var(--band-2)"}))
+    : [{id:"all", curve:DATA.curves[k].all, color:"var(--corr)", label:"corrigée",
+        band:"var(--band)"}];
+}
+
+function domain(){
+  let lo=Infinity, hi=-Infinity;
+  const eat = a => a.forEach(v => { if(v!=null&&isFinite(v)){ lo=Math.min(lo,v); hi=Math.max(hi,v);} });
+  plotted().forEach(s=>{ eat(s.curve.lo); eat(s.curve.hi); });
+  if(S.view!=="type") eat(DATA.curves["0none0"].all.central);
+  if(S.dots){
+    const pv = DATA.points[key()];
+    const p = DATA.sessions.map((s,i)=>pv[i]).filter(isFinite).sort((a,b)=>a-b);
+    // percentiles 3/97 : on montre le nuage sans laisser deux valeurs extremes ecraser l'echelle
+    eat([p[Math.floor(p.length*0.03)], p[Math.ceil(p.length*0.97)-1]]);
+  }
+  const pad = (hi-lo)*0.10;
+  return [lo-pad, hi+pad];
+}
+
+let YD = domain();
+const x = d => PL + d/DATA.grid[DATA.grid.length-1]*IW;
+const y = v => PT + (v-YD[0])/(YD[1]-YD[0])*IH;   // allure lente vers le bas
+
+function path(arr){
+  let s="", pen=false;
+  arr.forEach((v,i)=>{
+    if(v==null||!isFinite(v)){ pen=false; return; }
+    s += (pen?"L":"M") + x(DATA.grid[i]).toFixed(1) + " " + y(v).toFixed(1) + " ";
+    pen=true;
+  });
+  return s.trim();
+}
+
+// La bande est decoupee en segments : les courbes par type sont tronquees la ou
+// les seances manquent, et un polygone unique enjamberait le trou.
+function band(c){
+  let d="", run=[], back=[];
+  const flush = () => {
+    if(run.length>1) d += "M"+run.join("L")+"L"+back.join("L")+"Z ";
+    run=[]; back=[];
+  };
+  c.lo.forEach((v,i)=>{
+    if(v==null||!isFinite(v)||!isFinite(c.hi[i])){ flush(); return; }
+    run.push(`${x(DATA.grid[i]).toFixed(1)},${y(v).toFixed(1)}`);
+    back.unshift(`${x(DATA.grid[i]).toFixed(1)},${y(c.hi[i]).toFixed(1)}`);
+  });
+  flush();
+  return d.trim();
+}
+
+/* ---------- rendu ---------- */
+function render(){
+  YD = domain();
+  const k = key(), c = DATA.curves[k].all, raw = DATA.curves["0none0"].all;
+  const corrected = k !== "0none0";
+  const el = [];
+
+  // grille + axe Y : pas de 10 s/km
+  const step = (YD[1]-YD[0]) > 150 ? 30 : (YD[1]-YD[0]) > 70 ? 20 : 10;
+  for(let v=Math.ceil(YD[0]/step)*step; v<=YD[1]; v+=step){
+    el.push(`<line class="gridline" x1="${PL}" y1="${y(v).toFixed(1)}" x2="${PL+IW}" y2="${y(v).toFixed(1)}"/>`);
+    el.push(`<text class="axis-txt" x="${PL-9}" y="${(y(v)+3.5).toFixed(1)}" text-anchor="end">${pace(v)}</text>`);
+  }
+
+  // axe X : debut de chaque mois
+  const last = DATA.grid[DATA.grid.length-1];
+  for(let d=0; d<=last; d++){
+    const dt = dayDate(d);
+    if(dt.getDate()!==1) continue;
+    el.push(`<line class="gridline" x1="${x(d).toFixed(1)}" y1="${PT}" x2="${x(d).toFixed(1)}" y2="${PT+IH}" opacity=".55"/>`);
+    el.push(`<text class="axis-txt" x="${x(d).toFixed(1)}" y="${PT+IH+20}" text-anchor="middle">${MONTHS[dt.getMonth()]}</text>`);
+  }
+
+  const series = plotted();
+
+  // nuage des sorties : neutre en vue globale, teinte par type sinon
+  if(S.dots){
+    const pv = DATA.points[k];
+    DATA.sessions.forEach((s,i)=>{
+      const v=pv[i]; if(!isFinite(v)) return;
+      const r = Math.max(2.1, Math.min(4.6, Math.sqrt(s.min)/2.9));
+      const fill = S.view==="type" ? `var(--t-${s.typ})` : "var(--dot)";
+      el.push(`<circle cx="${x(s.d).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${r.toFixed(1)}"
+        fill="${fill}" opacity="${S.view==="type"?".42":".38"}"/>`);
+    });
+  }
+
+  series.forEach(s=>{ if(corrected||S.view==="type")
+    el.push(`<path d="${band(s.curve)}" fill="${s.band}"/>`); });
+
+  // brute : trait fin pointille, repere de la vue globale uniquement
+  if(S.view!=="type")
+    el.push(`<path d="${path(raw.central)}" fill="none" stroke="var(--raw)" stroke-width="1.8"
+      stroke-dasharray="5 4" stroke-linecap="round"/>`);
+
+  series.forEach(s=>{ if(corrected||S.view==="type")
+    el.push(`<path d="${path(s.curve.central)}" fill="none" stroke="${s.color}"
+      stroke-width="2.6" stroke-linecap="round"/>`); });
+
+  // etiquettes directes, decalees verticalement si elles se chevauchent
+  const endOf = a => { for(let i=a.length-1;i>=0;i--) if(isFinite(a[i])) return {v:a[i], d:DATA.grid[i]}; };
+  const marks = [];
+  if(S.view!=="type"){
+    const er = endOf(raw.central);
+    if(er) marks.push({y:y(er.v), d:er.d, t:"brute", c:"var(--raw)"});
+  }
+  series.forEach(s=>{ if(!corrected && S.view!=="type") return;
+    const e = endOf(s.curve.central);
+    if(e) marks.push({y:y(e.v), d:e.d, t:s.label, c:s.color});
+  });
+  marks.sort((a,b)=>a.y-b.y).forEach((m,i,arr)=>{
+    if(i>0 && m.y - arr[i-1].y < 13) m.y = arr[i-1].y + 13;
+    el.push(`<text class="serie-lbl" x="${x(m.d)+9}" y="${(m.y+3.5).toFixed(1)}"
+      fill="${m.c}">${m.t}</text>`);
+  });
+
+  el.push(`<line id="cross" x1="0" y1="${PT}" x2="0" y2="${PT+IH}" stroke="var(--muted)"
+    stroke-width="1" opacity="0"/>`);
+  el.push(`<rect id="hit" x="${PL}" y="${PT}" width="${IW}" height="${IH}" fill="transparent"/>`);
+
+  document.getElementById("chart").innerHTML = el.join("");
+  bindHover();
+  paintStats();
+  paintCtrls();
+  paintLegend();
+}
+
+function paintLegend(){
+  const k = key();
+  let h;
+  if(S.view==="type"){
+    h = M.types.map(t=>{
+      const e = lastOf(DATA.curves[k][t.id].central);
+      return `<span class="lg"><i style="border-color:var(--t-${t.id})"></i>${t.label}
+        <small>${t.n} sorties · ${pace(e)}/km</small></span>`;
+    }).join("");
+    h += `<span class="lg"><small>bandes : intervalle à 95 %</small></span>`;
+  } else {
+    h = `<span class="lg"><i style="border-color:var(--corr)"></i>Corrigée, avec intervalle à 95 %</span>
+      <span class="lg"><i style="border-color:var(--raw); border-top-style:dashed"></i>Brute, telle qu'enregistrée</span>
+      <span class="lg"><svg width="11" height="11" style="flex:none"><circle cx="5.5" cy="5.5" r="3.4"
+        fill="var(--dot)" opacity=".45"/></svg>Une sortie</span>`;
+  }
+  document.getElementById("legend").innerHTML = h;
+}
+
+/* ---------- chiffres cles ---------- */
+function lastOf(a){ for(let i=a.length-1;i>=0;i--) if(isFinite(a[i])) return a[i]; }
+function firstOf(a){ for(let i=0;i<a.length;i++) if(isFinite(a[i])) return a[i]; }
+
+function paintStats(){
+  const c = DATA.curves[key()].all, raw = DATA.curves["0none0"].all;
+  const now = lastOf(c.central), then = firstOf(c.central);
+  const gain = now-then;                      // negatif = progression
+  const gap = now-lastOf(raw.central);        // negatif = la correction accelere
+  const st = [
+    {k:`Allure à ${M.hr_ref} bpm`, v:pace(now)+" /km",
+     s:`intervalle ${pace(lastOf(c.lo))} – ${pace(lastOf(c.hi))}`},
+    {k:"Sur la période", v:effTxt(gain),
+     s:`${pace(then)} → ${pace(now)} par km`},
+    {k:"Écart brute / corrigée", v:effTxt(gap),
+     s:"aujourd'hui"},
+  ];
+  document.getElementById("stats").innerHTML = st.map(o=>
+    `<div class="stat"><div class="k">${o.k}</div><div class="v">${o.v}</div><div class="s">${o.s}</div></div>`).join("");
+}
+
+/* ---------- controles ---------- */
+function medianEffect(id){
+  // ecart median, en s/km, que ce facteur produit compte tenu de l'etat des autres
+  const on = {...S, [id]:true}, off = {...S, [id]:false};
+  if(id==="heat" && !S.humid) { on.humid=false; off.humid=false; }
+  const a = DATA.curves[key(on)].all.central, b = DATA.curves[key(off)].all.central;
+  return median(a.map((v,i)=> isFinite(v)&&isFinite(b[i]) ? v-b[i] : NaN));
+}
+
+function paintCtrls(){
+  document.getElementById("ctrls").innerHTML = FACTORS.map(f=>{
+    const dis = f.dep && !S[f.dep];
+    const eff = f.plain ? f.hint
+      : (dis ? "nécessite la chaleur" : effTxt(medianEffect(f.id)));
+    return `<label class="chk" ${dis?'aria-disabled="true"':""}>
+      <input type="checkbox" data-f="${f.id}" ${S[f.id]?"checked":""} ${dis?"disabled":""}>
+      <span><span class="lbl">${f.lbl}</span><span class="eff">${eff}</span></span></label>`;
+  }).join("");
+  document.querySelectorAll("#ctrls input").forEach(i=>
+    i.addEventListener("change", e=>{ S[e.target.dataset.f]=e.target.checked; render(); }));
+
+  // meme reference que les effets par facteur : mediane sur toute la periode
+  const a = DATA.curves[key()].all.central, b = DATA.curves["0none0"].all.central;
+  const tot = median(a.map((v,i)=> isFinite(v)&&isFinite(b[i]) ? v-b[i] : NaN));
+  document.getElementById("totaleff").textContent =
+    key()==="0none0" ? "aucune correction active" : `effet cumulé : ${effTxt(tot)}`;
+}
+
+/* ---------- survol ---------- */
+function bindHover(){
+  const svg = document.getElementById("chart");
+  const hit = document.getElementById("hit");
+  const cross = document.getElementById("cross");
+  const tip = document.getElementById("tip");
+  const wrap = svg.parentElement;
+
+  const move = ev => {
+    const r = svg.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width * W;
+    const d = Math.round((px-PL)/IW * DATA.grid[DATA.grid.length-1]);
+    if(d<0 || d>DATA.grid[DATA.grid.length-1]) return;
+    const i = DATA.grid.indexOf(d); if(i<0) return;
+
+    cross.setAttribute("x1", x(d)); cross.setAttribute("x2", x(d));
+    cross.setAttribute("opacity", ".4");
+
+    const c = DATA.curves[key()].all, raw = DATA.curves["0none0"].all;
+    const dt = dayDate(d);
+    let html = `<div class="td">${dt.getDate()} ${MONTHS[dt.getMonth()]} ${dt.getFullYear()}</div>`;
+    if(isFinite(raw.central[i]))
+      html += `<div class="tr"><span>Brute</span><b>${pace(raw.central[i])}</b></div>`;
+    if(key()!=="0none0" && isFinite(c.central[i]))
+      html += `<div class="tr"><span>Corrigée</span><b>${pace(c.central[i])}</b></div>`
+            + `<div class="tr"><span style="color:var(--muted)">Intervalle</span>`
+            + `<b style="color:var(--muted)">${pace(c.hi[i])} – ${pace(c.lo[i])}</b></div>`;
+
+    const s = DATA.sessions.find(o=>o.d===d);
+    if(s) html += `<div class="sess">
+        <div class="tr"><span>${s.place}</span><b>${s.km} km · ${pace(s.pace)}/km</b></div>
+        <div class="tr"><span>FC moyenne</span><b>${s.hr} bpm</b></div>
+        <div class="tr"><span>Météo</span><b>${s.t}°C · ${s.rh}% · WBGT ${s.wbgt}</b></div>
+        <div class="tr"><span>Altitude</span><b>${s.alt} m${s.altd?` · J+${s.altd}`:""}</b></div>
+      </div>`;
+
+    tip.innerHTML = html;
+    tip.style.opacity = 1;
+    const tw = tip.offsetWidth, left = x(d)/W * wrap.offsetWidth;
+    tip.style.left = Math.max(4, Math.min(wrap.offsetWidth-tw-4, left+14)) + "px";
+    tip.style.top = "26px";
+  };
+
+  hit.addEventListener("mousemove", move);
+  hit.addEventListener("mouseleave", ()=>{ tip.style.opacity=0; cross.setAttribute("opacity",0); });
+}
+
+/* ---------- statique ---------- */
+function boot(){
+  const f = new Date(M.start), l = new Date(M.end);
+  document.getElementById("period").textContent =
+    `${MONTHS[f.getMonth()]} – ${MONTHS[l.getMonth()]} ${l.getFullYear()}`;
+  document.getElementById("nsess").textContent = M.n;
+  document.getElementById("hrref").textContent = M.hr_ref;
+  document.getElementById("hrref2").textContent = M.hr_ref;
+  document.getElementById("nmc").textContent = M.n_mc;
+  document.getElementById("sig").textContent = M.sigma_days;
+  document.getElementById("slopetxt").textContent =
+    `${(M.coef.hrr*10).toFixed(1)} % par tranche de 10 points de %FCR`;
+  document.getElementById("antetxt").textContent =
+    `+${(M.coef.ante*100).toFixed(1)} % de rapport par unité de charge anaérobie, `
+    + `soit +${((Math.exp(M.coef.ante*4)-1)*100).toFixed(0)} % sur un fractionné franc`;
+
+  document.querySelectorAll(".views button").forEach(b=>
+    b.addEventListener("click", ()=>{
+      S.view = b.dataset.view;
+      document.querySelectorAll(".views button").forEach(o=>
+        o.setAttribute("aria-pressed", String(o===b)));
+      render();
+    }));
+
+  document.getElementById("typetbl").innerHTML = M.types.map(t=>
+    `<tr><td>${t.label}</td><td>${t.rule}</td><td>${t.n}</td></tr>`).join("");
+
+  const P = M.priors, pct = ([a,b],m=100)=>`${(a*m).toFixed(m===100?2:1)} – ${(b*m).toFixed(m===100?2:1)}`;
+  document.getElementById("priortbl").innerHTML = [
+    ["Pente", "Adjusted Pace COROS, confiance modulée", pct(P.u_slope,1)+" ×"],
+    ["Chaleur", "perte de vitesse par °C de WBGT au-dessus du seuil", pct(P.k_heat)+" %/°C"],
+    ["Seuil thermique", "WBGT sous lequel aucune dégradation", pct(P.wbgt0,1)+" °C"],
+    ["Altitude", "perte de VO₂max par 1000 m", pct(P.c_alt)+" %"],
+    ["… sous-maximal", "atténuation à intensité sous-maximale", pct(P.atten_int,1)+" ×"],
+    ["… acclimatation", "effet subsistant après 14 jours", pct(P.acclim_res,1)+" ×"],
+  ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+  render();
+}
+boot();
+window.addEventListener("resize", ()=>{ const t=document.getElementById("tip"); if(t) t.style.opacity=0; });
+</script>
