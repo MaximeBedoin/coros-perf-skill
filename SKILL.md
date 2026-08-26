@@ -164,6 +164,31 @@ Découpage sur la nature de l'effort : continu (`anaerobic_te < 2`) contre
 fractionné. C'est le seul critère stable — voir `references/pieges.md` pour les
 découpages par intensité et par durée, essayés et rejetés, avec leurs symptômes.
 
+## Allure cible pour une course à venir
+
+Le même modèle pris à l'envers : au lieu de ramener une sortie observée vers des
+conditions neutres, il projette une allure de référence vers les conditions d'un
+lieu et d'une date.
+
+```bash
+cd scripts && python pace_target.py --pace 4:25 --distance 10 \
+    --place "Paris" --datetime "2027-07-15 10:00" --scan 7-20
+```
+
+Le script importe `model.py`, donc il se lance depuis `scripts/`. Options utiles :
+`--elevation-gain` (D+ du parcours, corrigé par Minetti), `--altitude-days`
+(acclimatation), `--scan H-H` (compare les créneaux de départ).
+
+À moins de 16 jours il utilise la prévision ; au-delà, la climatologie du même
+jour sur dix ans, dont il tire une fourchette. Dans ce second cas l'incertitude
+vient surtout de la météo et non du modèle — le script le dit, et il faut le
+répéter à l'utilisateur plutôt que de laisser croire à une précision qui n'existe
+pas encore.
+
+L'allure de référence attendue est celle que l'athlète tiendrait **en conditions
+neutres** : ni son record, ni son allure d'entraînement du moment. La prédiction
+de `queryFitnessAssessmentOverview` en est un point de départ raisonnable.
+
 ## Produire la page dans une autre langue
 
 Le gabarit est en français, mais rien n'y est figé : traduire les chaînes en

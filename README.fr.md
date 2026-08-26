@@ -83,7 +83,33 @@ Une fois installé, demandez simplement :
 
 La description est écrite pour se déclencher aussi sur des formulations
 indirectes — « ma forme », « est-ce que je progresse vraiment ou c'est la
-météo ». Ou invoquez-la explicitement avec `/coros-perf`.
+météo ». Ou invoquez-le explicitement avec `/coros-perf`.
+
+## Bonus : allure à viser le jour J
+
+Le même modèle pris à l'envers. Au lieu de ramener une sortie observée vers des
+conditions neutres, il projette une allure de référence vers les conditions d'un
+lieu, d'une date et d'une **heure** :
+
+```bash
+cd scripts && python pace_target.py --pace 4:25 --distance 10 \
+    --place "Paris" --datetime "2027-07-15 14:00" --scan 7-21
+```
+
+```
+Allure de référence   4:25 /km
+Allure à viser        4:34 /km   (80 % : 4:30 à 4:42)
+Écart                 9 s/km plus lent   ·   1.5 min sur 10 km
+
+Selon l'heure de départ :
+   7 h     16 °C   WBGT 14.8   4:29 /km  =======  <-- meilleur
+  14 h     24 °C   WBGT 20.8   4:35 /km  ===================
+```
+
+À moins de 16 jours il utilise la prévision ; au-delà, la climatologie du même
+jour sur dix ans, qui donne une fourchette plutôt qu'un chiffre. `--scan` compare
+les créneaux de départ — 6 s/km d'écart sur un 10 km parisien en juillet.
+`--elevation-gain` applique le coût de la pente de Minetti au profil du parcours.
 
 ---
 

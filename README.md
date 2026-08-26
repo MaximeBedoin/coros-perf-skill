@@ -90,6 +90,32 @@ about 550 words and 20 strings, most of it prose in the "Method" panel. The
 [skill file](SKILL.md) lists the three spots worth checking afterwards (month
 names, the faster/slower wording, decimal separators).
 
+## Bonus: race-day target pace
+
+The same model run backwards. Instead of pulling an observed run towards neutral
+conditions, it projects a reference pace onto the conditions of a given place,
+date and **time of day**:
+
+```bash
+cd scripts && python pace_target.py --pace 4:25 --distance 10 \
+    --place "Paris" --datetime "2027-07-15 14:00" --scan 7-21
+```
+
+```
+Allure de référence   4:25 /km
+Allure à viser        4:34 /km   (80 % : 4:30 à 4:42)
+Écart                 9 s/km plus lent   ·   1.5 min sur 10 km
+
+Selon l'heure de départ :
+   7 h     16 °C   WBGT 14.8   4:29 /km  =======  <-- meilleur
+  14 h     24 °C   WBGT 20.8   4:35 /km  ===================
+```
+
+Within 16 days it uses the forecast; beyond that, the climatology of the same
+calendar day over ten years, which yields a range rather than a single number.
+`--scan` compares start times — worth 6 s/km on a July 10 km in Paris.
+`--elevation-gain` applies the Minetti cost of gradient to the course profile.
+
 ---
 
 # Build one yourself
