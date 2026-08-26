@@ -11,6 +11,7 @@
   --corr:#1D6FC0; --raw:#B26011;
   --t-cont:#1D6FC0; --t-frac:#B26011;
   --band:rgba(29,111,192,.15); --band-2:rgba(178,96,17,.14); --grid:#E7ECF1;
+  --band-t:rgba(29,111,192,.10); --band-t2:rgba(178,96,17,.09);
   --dot:#8E9AA6; --focus:#1D6FC0;
 }
 @media (prefers-color-scheme:dark){
@@ -21,6 +22,7 @@
     --corr:#3E86D8; --raw:#C4842A;
     --t-cont:#3E86D8; --t-frac:#C4842A;
     --band:rgba(62,134,216,.20); --band-2:rgba(196,132,42,.18); --grid:#212B35;
+    --band-t:rgba(62,134,216,.13); --band-t2:rgba(196,132,42,.11);
     --dot:#5D6975; --focus:#3E86D8;
   }
 }
@@ -31,6 +33,7 @@
   --corr:#3E86D8; --raw:#C4842A;
   --t-cont:#3E86D8; --t-frac:#C4842A;
   --band:rgba(62,134,216,.20); --band-2:rgba(196,132,42,.18); --grid:#212B35;
+  --band-t:rgba(62,134,216,.13); --band-t2:rgba(196,132,42,.11);
   --dot:#5D6975; --focus:#3E86D8;
 }
 
@@ -85,9 +88,9 @@ h1{
 .chk:has(input:checked){border-color:var(--corr); background:var(--surface)}
 .chk[aria-disabled="true"]{opacity:.42; cursor:not-allowed}
 .chk input{margin:2px 0 0; accent-color:var(--corr); width:15px; height:15px; flex:none}
-.chk .lbl{font-weight:500; font-size:14px; line-height:1.3}
-.chk .eff{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted);
-  margin-top:3px; font-variant-numeric:tabular-nums}
+.chk .lbl{display:block; font-weight:500; font-size:14px; line-height:1.3}
+.chk .eff{display:block; font-family:"JetBrains Mono",monospace; font-size:11px;
+  color:var(--muted); margin-top:3px; font-variant-numeric:tabular-nums}
 
 /* ---------- bascule de vue ---------- */
 .views{display:flex; gap:0; border:1px solid var(--border); border-radius:3px; overflow:hidden}
@@ -104,7 +107,8 @@ h1{
 
 /* ---------- graphe ---------- */
 .chart-wrap{padding:4px 8px 12px; position:relative}
-svg{display:block; width:100%; height:auto; overflow:visible}
+#chart{display:block; width:100%; height:auto; overflow:visible}
+.lg svg{display:block; flex:none}
 .gridline{stroke:var(--grid); stroke-width:1}
 .axis-txt{font-family:"JetBrains Mono",monospace; font-size:11px; fill:var(--muted);
   font-variant-numeric:tabular-nums}
@@ -327,7 +331,7 @@ function plotted(){
   const k = key();
   return S.view==="type"
     ? TYPES.map(id=>({id, curve:DATA.curves[k][id], color:`var(--t-${id})`,
-        label:M.types.find(t=>t.id===id).label, band:id==="cont"?"var(--band)":"var(--band-2)"}))
+        label:M.types.find(t=>t.id===id).label, band:id==="cont"?"var(--band-t)":"var(--band-t2)"}))
     : [{id:"all", curve:DATA.curves[k].all, color:"var(--corr)", label:"corrigée",
         band:"var(--band)"}];
 }
@@ -415,8 +419,12 @@ function render(){
     });
   }
 
-  series.forEach(s=>{ if(corrected||S.view==="type")
-    el.push(`<path d="${band(s.curve)}" fill="${s.band}"/>`); });
+  series.forEach(s=>{ if(!corrected && S.view!=="type") return;
+    // en vue par type les bandes se recouvrent : un liseré garde chaque
+    // intervalle lisible là où les remplissages se superposent
+    const edge = S.view==="type"
+      ? ` stroke="${s.color}" stroke-width="0.75" stroke-opacity=".38"` : "";
+    el.push(`<path d="${band(s.curve)}" fill="${s.band}"${edge}/>`); });
 
   // brute : trait fin pointille, repere de la vue globale uniquement
   if(S.view!=="type")
