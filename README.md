@@ -5,7 +5,7 @@ de données COROS en une courbe de performance **corrigée des conditions** :
 pente, chaleur, humidité, altitude.
 
 Parce qu'un 10 km couru à 32 °C n'est pas comparable au même 10 km couru à 8 °C,
-et qu'un footing en Haute-Loire à 850 m n'est pas un footing en bord de Seine.
+et qu'un footing en montagne à 1000 m n'est pas un footing en bord de mer.
 
 ![Aperçu de la page produite](docs/capture.png)
 
