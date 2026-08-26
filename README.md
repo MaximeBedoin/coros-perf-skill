@@ -1,6 +1,6 @@
 # coros-perf
 
-Une skill [Claude Code](https://claude.com/claude-code) qui transforme des mois
+Un skill [Claude Code](https://claude.com/claude-code) qui transforme des mois
 de données COROS en une courbe de performance **corrigée des conditions** :
 pente, chaleur, humidité, altitude.
 
