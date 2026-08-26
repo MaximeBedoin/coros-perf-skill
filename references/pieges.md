@@ -151,7 +151,7 @@ préservent.
 
 `scripts/validate_palette.py` calcule tout ça. `node` étant souvent absent, ce
 portage Python reprend les seuils et les matrices Machado-Oliveira-Fernandes du
-validateur de la skill `dataviz`.
+validateur du skill `dataviz`.
 
 ## 8. Deux conventions de signe pour la même quantité
 

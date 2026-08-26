@@ -5,7 +5,7 @@ description: Construit une courbe de performance en course à pied à partir des
 
 # Courbe de performance COROS corrigée des conditions
 
-## Ce que cette skill produit
+## Ce que ce skill produit
 
 Une page interactive : une courbe d'allure brute, une courbe corrigée avec son
 intervalle, des cases pour activer chaque facteur, et une bascule par type de
@@ -131,7 +131,7 @@ python scripts/validate_palette.py "#1D6FC0,#B26011" light "#FFFFFF"
 ```
 
 (`node` est souvent absent ; ce script est un portage Python fidèle du
-validateur de la skill `dataviz`, mêmes seuils et mêmes matrices.)
+validateur du skill `dataviz`, mêmes seuils et mêmes matrices.)
 
 ### 6. Restituer
 
