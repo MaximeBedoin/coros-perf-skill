@@ -55,9 +55,13 @@ def main():
     acts = pd.read_csv(data / "activities_base.csv", parse_dates=["date"])
     places = acts.groupby("place").agg(lat=("lat", "mean"), lon=("lon", "mean")).reset_index()
     # une journee de marge de chaque cote : les sorties tot le matin ou tard le
-    # soir peuvent tomber hors de la fenetre en heure UTC
+    # soir peuvent tomber hors de la fenetre en heure UTC. La marge de fin est
+    # bornee a aujourd'hui : l'archive refuse (HTTP 400) toute end_date dans le
+    # futur, ce qui arrive des que la derniere seance date du jour meme. Les
+    # heures qui manquent alors sont comblees par l'API forecast plus bas.
     start = (acts.date.min() - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-    end = (acts.date.max() + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    end_dt = min(acts.date.max() + pd.Timedelta(days=1), pd.Timestamp.today().normalize())
+    end = end_dt.strftime("%Y-%m-%d")
 
     frames = []
     for _, row in places.iterrows():
