@@ -614,6 +614,68 @@ function paintCtrls(){
 }
 
 /* ---------- survol ---------- */
+// coordonnées du curseur dans le repère du viewBox
+function chartAt(ev){
+  const r = document.getElementById("chart").getBoundingClientRect();
+  return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H];
+}
+
+// séance la plus proche du curseur, à moins de 14 unités — la distance est
+// mesurée en 2D pour qu'un jour portant deux sorties reste discriminable
+function nearestSession(px, py){
+  if(!S.dots) return null;
+  const pv = DATA.points[key()];
+  let best = null, bd = 14*14;
+  DATA.sessions.forEach((s,i)=>{
+    const v = pv[i];
+    if(!isFinite(v) || !inView(s.d)) return;
+    const dx = x(s.d)-px, dy = y(v)-py, dist = dx*dx + dy*dy;
+    if(dist < bd){ bd = dist; best = i; }
+  });
+  return best;
+}
+
+function hideTip(){
+  const tip = document.getElementById("tip");
+  const cross = document.getElementById("cross");
+  if(tip) tip.style.opacity = 0;
+  if(cross) cross.setAttribute("opacity", 0);
+}
+
+function drawBrush(px){
+  const r = document.getElementById("brush");
+  if(!r || S.brush === null) return;
+  const a = Math.max(PL, Math.min(S.brush, px));
+  const b = Math.min(PL+IW, Math.max(S.brush, px));
+  r.setAttribute("x", a);
+  r.setAttribute("width", Math.max(0, b-a));
+}
+
+function clearBrush(){
+  S.brush = null;
+  const r = document.getElementById("brush");
+  if(r) r.setAttribute("width", 0);
+}
+
+// Écouté sur la fenêtre, pas sur le graphe : relâcher le bouton en dehors de la
+// zone de tracé laissait sinon le rectangle de sélection affiché et l'état
+// bloqué, si bien que tout mouvement suivant passait pour une sélection.
+function endBrush(ev){
+  if(S.brush === null) return;
+  const start = S.brush;
+  const [px, py] = chartAt(ev);
+  clearBrush();
+  if(Math.abs(px - start) < 8){        // trop court pour un zoom : c'est un clic
+    const i = nearestSession(px, py);
+    S.pinned = (i !== null && i !== S.pinned) ? i : null;
+    paintInspect(); redrawDots();
+    return;
+  }
+  const a = Math.max(0, dayAt(Math.min(start, px)));
+  const b = Math.min(LAST, dayAt(Math.max(start, px)));
+  if(b - a >= 3){ XD = [a, b]; render(); }
+}
+
 function bindHover(){
   const svg = document.getElementById("chart");
   const hit = document.getElementById("hit");
@@ -621,32 +683,12 @@ function bindHover(){
   const tip = document.getElementById("tip");
   const wrap = svg.parentElement;
 
-  // coordonnées du curseur dans le repère du viewBox
-  const at = ev => {
-    const r = svg.getBoundingClientRect();
-    return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H];
-  };
-
-  // séance la plus proche du curseur, à moins de 14 unités — la distance est
-  // mesurée en 2D pour qu'un jour portant deux sorties reste discriminable
-  const nearest = (px, py) => {
-    const pv = DATA.points[key()];
-    let best = null, bd = 14*14;
-    if(!S.dots) return null;
-    DATA.sessions.forEach((s,i)=>{
-      const v = pv[i];
-      if(!isFinite(v) || !inView(s.d)) return;
-      const dx = x(s.d)-px, dy = y(v)-py, dist = dx*dx + dy*dy;
-      if(dist < bd){ bd = dist; best = i; }
-    });
-    return best;
-  };
-
   const move = ev => {
-    const [px, py] = at(ev);
-    if(S.brush !== null){ drawBrush(px); return; }
+    const [px, py] = chartAt(ev);
+    // pendant un glisser, l'infobulle masquerait la plage qu'on sélectionne
+    if(S.brush !== null){ drawBrush(px); hideTip(); return; }
 
-    const hov = nearest(px, py);
+    const hov = nearestSession(px, py);
     if(hov !== S.hovered){
       S.hovered = hov;
       if(S.pinned === null) paintInspect();
@@ -678,37 +720,17 @@ function bindHover(){
     tip.style.top = "26px";
   };
 
-  const brushRect = document.getElementById("brush");
-  const drawBrush = px => {
-    const a = Math.min(S.brush, px), b = Math.max(S.brush, px);
-    brushRect.setAttribute("x", Math.max(PL, a));
-    brushRect.setAttribute("width", Math.min(PL+IW, b) - Math.max(PL, a));
-  };
-  const clearBrush = () => { S.brush = null; brushRect.setAttribute("width", 0); };
-
   hit.addEventListener("mousemove", move);
   hit.addEventListener("mouseleave", ()=>{
-    tip.style.opacity=0; cross.setAttribute("opacity",0);
+    hideTip();
+    // un glisser commencé ici se poursuit dehors : seul le survol s'arrête
     if(S.hovered !== null){ S.hovered = null; if(S.pinned===null) paintInspect(); redrawDots(); }
   });
 
-  hit.addEventListener("mousedown", ev=>{ S.brush = at(ev)[0]; });
-
-  hit.addEventListener("mouseup", ev=>{
-    const start = S.brush;
-    const px = at(ev)[0];
-    clearBrush();
-    // un glisser trop court est un clic : il sélectionne ou libère une séance
-    if(start === null || Math.abs(px-start) < 8){
-      const [cx, cy] = at(ev);
-      const hit_i = nearest(cx, cy);
-      S.pinned = (hit_i !== null && hit_i !== S.pinned) ? hit_i : null;
-      paintInspect(); redrawDots();
-      return;
-    }
-    const a = Math.max(0, dayAt(Math.min(start, px)));
-    const b = Math.min(LAST, dayAt(Math.max(start, px)));
-    if(b - a >= 3){ XD = [a, b]; render(); }
+  hit.addEventListener("mousedown", ev=>{
+    ev.preventDefault();               // sinon le navigateur sélectionne du texte
+    S.brush = chartAt(ev)[0];
+    hideTip();
   });
 
   svg.addEventListener("dblclick", resetZoom);
@@ -827,6 +849,9 @@ function boot(){
   ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
 
   document.getElementById("zoomreset").addEventListener("click", resetZoom);
+  // une seule fois : bindHover est rappelé à chaque rendu, pas boot
+  window.addEventListener("mouseup", endBrush);
+  window.addEventListener("blur", clearBrush);
   document.addEventListener("keydown", e=>{
     if(e.key==="Escape"){
       if(S.pinned!==null){ S.pinned=null; paintInspect(); redrawDots(); }
