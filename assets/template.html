@@ -130,6 +130,39 @@ h1{
 .tip .sess{margin-top:9px; padding-top:8px; border-top:1px solid var(--border-2); color:var(--ink-2)}
 .tip .sess .tr{font-size:11.5px}
 
+/* ---------- zoom ---------- */
+.zoomhint{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--muted);
+  padding:0 20px 2px; display:flex; justify-content:space-between; align-items:center; gap:12px}
+.zoomhint button{font:inherit; font-size:11px; color:var(--corr); background:none;
+  border:1px solid var(--border); border-radius:3px; padding:3px 9px; cursor:pointer}
+.zoomhint button:hover{border-color:var(--corr)}
+.zoomhint button:focus-visible{outline:2px solid var(--focus); outline-offset:1px}
+.zoomhint button[hidden]{display:none}
+
+/* ---------- inspecteur de séance ---------- */
+.inspect{border-top:1px solid var(--border); padding:15px 20px 17px}
+.inspect-head{display:flex; justify-content:space-between; align-items:baseline;
+  gap:12px; flex-wrap:wrap; margin-bottom:11px}
+.inspect-title{font-family:"Zilla Slab",Georgia,serif; font-size:17px; font-weight:600}
+.inspect-title .muted{color:var(--muted); font-weight:400; font-size:14px;
+  font-family:Archivo,sans-serif}
+.pin{font-family:"JetBrains Mono",monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--corr); display:flex; align-items:center; gap:6px}
+.pin button{font:inherit; color:var(--muted); background:none; border:0; cursor:pointer;
+  text-decoration:underline; padding:0}
+.pin button:hover{color:var(--ink)}
+.igrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(122px,1fr)); gap:1px;
+  background:var(--border-2); border:1px solid var(--border-2); border-radius:3px; overflow:hidden}
+.ifield{background:var(--surface); padding:9px 11px}
+.ifield .k{font-family:"JetBrains Mono",monospace; font-size:9.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted)}
+.ifield .v{font-family:"JetBrains Mono",monospace; font-size:14px; margin-top:3px;
+  font-variant-numeric:tabular-nums; color:var(--ink)}
+.ifield .v small{font-size:11px; color:var(--ink-2); font-family:Archivo,sans-serif}
+.chip{display:inline-block; font-family:Archivo,sans-serif; font-size:11px; padding:1px 7px;
+  border-radius:9px; border:1px solid currentColor}
+.empty{color:var(--muted); font-size:13.5px; padding:6px 0 2px}
+
 /* ---------- methode ---------- */
 details{background:var(--surface); border:1px solid var(--border); border-radius:3px}
 summary{padding:15px 20px; cursor:pointer; font-weight:600; font-size:14px;
@@ -186,6 +219,11 @@ summary:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
       <p id="charttitle" hidden>Allure équivalente à fréquence cardiaque constante, brute et corrigée des facteurs environnementaux</p>
       <div class="tip" id="tip"></div>
     </div>
+    <div class="zoomhint">
+      <span id="zoomrange">Glisse sur le graphe pour zoomer · double-clic pour revenir</span>
+      <button type="button" id="zoomreset" hidden>Toute la période</button>
+    </div>
+    <div class="inspect" id="inspect"></div>
   </section>
 
   <details>
@@ -298,7 +336,8 @@ summary:focus-visible{outline:2px solid var(--focus); outline-offset:-2px}
 const DATA = __DATA__;
 
 const M = DATA.meta;
-const S = {slope:true, heat:true, humid:true, alt:true, dots:true, view:"all"};
+const S = {slope:true, heat:true, humid:true, alt:true, dots:true, view:"all",
+           hovered:null, pinned:null, brush:null};
 
 const FACTORS = [
   {id:"slope", lbl:"Pente",     hint:"dénivelé de la sortie"},
@@ -336,24 +375,37 @@ function plotted(){
         band:"var(--band)"}];
 }
 
+const LAST = DATA.grid[DATA.grid.length-1];
+let XD = [0, LAST];                 // fenêtre de zoom, en jours
+const inView = d => d >= XD[0] && d <= XD[1];
+
+// L'échelle verticale suit la fenêtre : zoomer sur une période sans redéployer
+// l'axe des allures ne montrerait qu'un trait plat au milieu du graphe.
 function domain(){
   let lo=Infinity, hi=-Infinity;
-  const eat = a => a.forEach(v => { if(v!=null&&isFinite(v)){ lo=Math.min(lo,v); hi=Math.max(hi,v);} });
-  plotted().forEach(s=>{ eat(s.curve.lo); eat(s.curve.hi); });
-  if(S.view!=="type") eat(DATA.curves["0none0"].all.central);
+  const eat = (a, idx) => a.forEach((v,i) => {
+    if(v==null||!isFinite(v)) return;
+    if(idx && !inView(DATA.grid[i])) return;
+    lo=Math.min(lo,v); hi=Math.max(hi,v);
+  });
+  plotted().forEach(s=>{ eat(s.curve.lo, true); eat(s.curve.hi, true); });
+  if(S.view!=="type") eat(DATA.curves["0none0"].all.central, true);
   if(S.dots){
     const pv = DATA.points[key()];
-    const p = DATA.sessions.map((s,i)=>pv[i]).filter(isFinite).sort((a,b)=>a-b);
+    const p = DATA.sessions.map((s,i)=>inView(s.d)?pv[i]:NaN)
+                           .filter(isFinite).sort((a,b)=>a-b);
     // percentiles 3/97 : on montre le nuage sans laisser deux valeurs extremes ecraser l'echelle
-    eat([p[Math.floor(p.length*0.03)], p[Math.ceil(p.length*0.97)-1]]);
+    if(p.length) eat([p[Math.floor(p.length*0.03)], p[Math.ceil(p.length*0.97)-1]], false);
   }
-  const pad = (hi-lo)*0.10;
+  if(!isFinite(lo)) return [280, 380];   // fenêtre vide : échelle de repli
+  const pad = Math.max((hi-lo)*0.10, 4);
   return [lo-pad, hi+pad];
 }
 
 let YD = domain();
-const x = d => PL + d/DATA.grid[DATA.grid.length-1]*IW;
+const x = d => PL + (d-XD[0])/(XD[1]-XD[0])*IW;
 const y = v => PT + (v-YD[0])/(YD[1]-YD[0])*IH;   // allure lente vers le bas
+const dayAt = px => XD[0] + (px-PL)/IW*(XD[1]-XD[0]);
 
 function path(arr){
   let s="", pen=false;
@@ -396,14 +448,23 @@ function render(){
     el.push(`<text class="axis-txt" x="${PL-9}" y="${(y(v)+3.5).toFixed(1)}" text-anchor="end">${pace(v)}</text>`);
   }
 
-  // axe X : debut de chaque mois
-  const last = DATA.grid[DATA.grid.length-1];
-  for(let d=0; d<=last; d++){
+  // axe X : début de mois sur une large fenêtre, lundis quand on zoome, sinon
+  // une fenêtre courte n'afficherait qu'une graduation ou aucune
+  const span = XD[1]-XD[0];
+  const weekly = span <= 80;
+  for(let d=Math.ceil(XD[0]); d<=XD[1]; d++){
     const dt = dayDate(d);
-    if(dt.getDate()!==1) continue;
+    const isTick = weekly ? dt.getDay()===1 : dt.getDate()===1;
+    if(!isTick) continue;
+    const lbl = weekly ? `${dt.getDate()} ${MONTHS[dt.getMonth()].slice(0,4)}`
+                       : MONTHS[dt.getMonth()];
     el.push(`<line class="gridline" x1="${x(d).toFixed(1)}" y1="${PT}" x2="${x(d).toFixed(1)}" y2="${PT+IH}" opacity=".55"/>`);
-    el.push(`<text class="axis-txt" x="${x(d).toFixed(1)}" y="${PT+IH+20}" text-anchor="middle">${MONTHS[dt.getMonth()]}</text>`);
+    el.push(`<text class="axis-txt" x="${x(d).toFixed(1)}" y="${PT+IH+20}" text-anchor="middle">${lbl}</text>`);
   }
+
+  // tout ce qui porte des données est découpé à la zone de tracé
+  el.push(`<clipPath id="plotclip"><rect x="${PL}" y="${PT-6}" width="${IW}" height="${IH+12}"/></clipPath>`);
+  el.push(`<g clip-path="url(#plotclip)">`);
 
   const series = plotted();
 
@@ -411,11 +472,14 @@ function render(){
   if(S.dots){
     const pv = DATA.points[k];
     DATA.sessions.forEach((s,i)=>{
-      const v=pv[i]; if(!isFinite(v)) return;
+      const v=pv[i]; if(!isFinite(v) || !inView(s.d)) return;
       const r = Math.max(2.1, Math.min(4.6, Math.sqrt(s.min)/2.9));
       const fill = S.view==="type" ? `var(--t-${s.typ})` : "var(--dot)";
-      el.push(`<circle cx="${x(s.d).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${r.toFixed(1)}"
-        fill="${fill}" opacity="${S.view==="type"?".42":".38"}"/>`);
+      const on = S.pinned===i || S.hovered===i;
+      el.push(`<circle cx="${x(s.d).toFixed(1)}" cy="${y(v).toFixed(1)}"
+        r="${(on ? r+2.2 : r).toFixed(1)}" fill="${fill}"
+        opacity="${on ? 1 : (S.view==="type"?".42":".38")}"
+        ${on ? `stroke="var(--surface)" stroke-width="1.5"` : ""}/>`);
     });
   }
 
@@ -435,8 +499,11 @@ function render(){
     el.push(`<path d="${path(s.curve.central)}" fill="none" stroke="${s.color}"
       stroke-width="2.6" stroke-linecap="round"/>`); });
 
+  el.push(`</g>`);   // fin de la zone découpée
+
   // etiquettes directes, decalees verticalement si elles se chevauchent
-  const endOf = a => { for(let i=a.length-1;i>=0;i--) if(isFinite(a[i])) return {v:a[i], d:DATA.grid[i]}; };
+  const endOf = a => { for(let i=a.length-1;i>=0;i--)
+    if(isFinite(a[i]) && inView(DATA.grid[i])) return {v:a[i], d:DATA.grid[i]}; };
   const marks = [];
   if(S.view!=="type"){
     const er = endOf(raw.central);
@@ -454,13 +521,28 @@ function render(){
 
   el.push(`<line id="cross" x1="0" y1="${PT}" x2="0" y2="${PT+IH}" stroke="var(--muted)"
     stroke-width="1" opacity="0"/>`);
-  el.push(`<rect id="hit" x="${PL}" y="${PT}" width="${IW}" height="${IH}" fill="transparent"/>`);
+  el.push(`<rect id="brush" x="0" y="${PT}" width="0" height="${IH}"
+    fill="var(--corr)" opacity=".13" pointer-events="none"/>`);
+  el.push(`<rect id="hit" x="${PL}" y="${PT}" width="${IW}" height="${IH}"
+    fill="transparent" style="cursor:crosshair"/>`);
 
   document.getElementById("chart").innerHTML = el.join("");
   bindHover();
   paintStats();
   paintCtrls();
   paintLegend();
+  paintZoom();
+  paintInspect();
+}
+
+function paintZoom(){
+  const full = XD[0]<=0 && XD[1]>=LAST;
+  const a = dayDate(Math.round(XD[0])), b = dayDate(Math.round(XD[1]));
+  const f = dt => `${dt.getDate()} ${MONTHS[dt.getMonth()]}`;
+  document.getElementById("zoomrange").textContent = full
+    ? "Glisse sur le graphe pour zoomer · double-clic pour revenir"
+    : `${f(a)} – ${f(b)} · ${Math.round(XD[1]-XD[0])} jours`;
+  document.getElementById("zoomreset").hidden = full;
 }
 
 function paintLegend(){
@@ -539,11 +621,41 @@ function bindHover(){
   const tip = document.getElementById("tip");
   const wrap = svg.parentElement;
 
-  const move = ev => {
+  // coordonnées du curseur dans le repère du viewBox
+  const at = ev => {
     const r = svg.getBoundingClientRect();
-    const px = (ev.clientX - r.left) / r.width * W;
-    const d = Math.round((px-PL)/IW * DATA.grid[DATA.grid.length-1]);
-    if(d<0 || d>DATA.grid[DATA.grid.length-1]) return;
+    return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H];
+  };
+
+  // séance la plus proche du curseur, à moins de 14 unités — la distance est
+  // mesurée en 2D pour qu'un jour portant deux sorties reste discriminable
+  const nearest = (px, py) => {
+    const pv = DATA.points[key()];
+    let best = null, bd = 14*14;
+    if(!S.dots) return null;
+    DATA.sessions.forEach((s,i)=>{
+      const v = pv[i];
+      if(!isFinite(v) || !inView(s.d)) return;
+      const dx = x(s.d)-px, dy = y(v)-py, dist = dx*dx + dy*dy;
+      if(dist < bd){ bd = dist; best = i; }
+    });
+    return best;
+  };
+
+  const move = ev => {
+    const [px, py] = at(ev);
+    if(S.brush !== null){ drawBrush(px); return; }
+
+    const hov = nearest(px, py);
+    if(hov !== S.hovered){
+      S.hovered = hov;
+      if(S.pinned === null) paintInspect();
+      redrawDots();
+    }
+    hit.style.cursor = hov !== null ? "pointer" : "crosshair";
+
+    const d = Math.round(dayAt(px));
+    if(d<0 || d>LAST) return;
     const i = DATA.grid.indexOf(d); if(i<0) return;
 
     cross.setAttribute("x1", x(d)); cross.setAttribute("x2", x(d));
@@ -559,14 +671,6 @@ function bindHover(){
             + `<div class="tr"><span style="color:var(--muted)">Intervalle</span>`
             + `<b style="color:var(--muted)">${pace(c.hi[i])} – ${pace(c.lo[i])}</b></div>`;
 
-    const s = DATA.sessions.find(o=>o.d===d);
-    if(s) html += `<div class="sess">
-        <div class="tr"><span>${s.place}</span><b>${s.km} km · ${pace(s.pace)}/km</b></div>
-        <div class="tr"><span>FC moyenne</span><b>${s.hr} bpm</b></div>
-        <div class="tr"><span>Météo</span><b>${s.t}°C · ${s.rh}% · WBGT ${s.wbgt}</b></div>
-        <div class="tr"><span>Altitude</span><b>${s.alt} m${s.altd?` · J+${s.altd}`:""}</b></div>
-      </div>`;
-
     tip.innerHTML = html;
     tip.style.opacity = 1;
     const tw = tip.offsetWidth, left = x(d)/W * wrap.offsetWidth;
@@ -574,8 +678,115 @@ function bindHover(){
     tip.style.top = "26px";
   };
 
+  const brushRect = document.getElementById("brush");
+  const drawBrush = px => {
+    const a = Math.min(S.brush, px), b = Math.max(S.brush, px);
+    brushRect.setAttribute("x", Math.max(PL, a));
+    brushRect.setAttribute("width", Math.min(PL+IW, b) - Math.max(PL, a));
+  };
+  const clearBrush = () => { S.brush = null; brushRect.setAttribute("width", 0); };
+
   hit.addEventListener("mousemove", move);
-  hit.addEventListener("mouseleave", ()=>{ tip.style.opacity=0; cross.setAttribute("opacity",0); });
+  hit.addEventListener("mouseleave", ()=>{
+    tip.style.opacity=0; cross.setAttribute("opacity",0);
+    if(S.hovered !== null){ S.hovered = null; if(S.pinned===null) paintInspect(); redrawDots(); }
+  });
+
+  hit.addEventListener("mousedown", ev=>{ S.brush = at(ev)[0]; });
+
+  hit.addEventListener("mouseup", ev=>{
+    const start = S.brush;
+    const px = at(ev)[0];
+    clearBrush();
+    // un glisser trop court est un clic : il sélectionne ou libère une séance
+    if(start === null || Math.abs(px-start) < 8){
+      const [cx, cy] = at(ev);
+      const hit_i = nearest(cx, cy);
+      S.pinned = (hit_i !== null && hit_i !== S.pinned) ? hit_i : null;
+      paintInspect(); redrawDots();
+      return;
+    }
+    const a = Math.max(0, dayAt(Math.min(start, px)));
+    const b = Math.min(LAST, dayAt(Math.max(start, px)));
+    if(b - a >= 3){ XD = [a, b]; render(); }
+  });
+
+  svg.addEventListener("dblclick", resetZoom);
+}
+
+// Seuls les points changent quand la sélection bouge : on évite un render()
+// complet, qui reconstruirait le SVG et couperait le survol en cours.
+function redrawDots(){
+  const svg = document.getElementById("chart");
+  const pv = DATA.points[key()];
+  let n = 0;
+  DATA.sessions.forEach((s,i)=>{
+    const v = pv[i];
+    if(!isFinite(v) || !inView(s.d)) return;
+    const c = svg.querySelectorAll("circle")[n++];
+    if(!c) return;
+    const r = Math.max(2.1, Math.min(4.6, Math.sqrt(s.min)/2.9));
+    const on = S.pinned===i || S.hovered===i;
+    c.setAttribute("r", (on ? r+2.2 : r).toFixed(1));
+    c.setAttribute("opacity", on ? 1 : (S.view==="type"?".42":".38"));
+    if(on){ c.setAttribute("stroke","var(--surface)"); c.setAttribute("stroke-width","1.5"); }
+    else c.removeAttribute("stroke");
+  });
+}
+
+function resetZoom(){
+  if(XD[0]<=0 && XD[1]>=LAST) return;
+  XD = [0, LAST];
+  render();
+}
+
+/* ---------- inspecteur de séance ---------- */
+function paintInspect(){
+  const box = document.getElementById("inspect");
+  const i = S.pinned !== null ? S.pinned : S.hovered;
+  if(i === null || i === undefined){
+    box.innerHTML = `<div class="inspect-head"><span class="inspect-title">Détail d'une sortie</span></div>
+      <p class="empty">Survole un point pour voir la séance ; clique dessus pour la garder affichée.</p>`;
+    return;
+  }
+  const s = DATA.sessions[i];
+  const idx = DATA.points[key()][i];
+  const raw = DATA.points["0none0"][i];
+  const dt = dayDate(s.d);
+  const hrr = (s.hr - M.hr_rest) / (M.hr_max - M.hr_rest);
+  const t = M.types.find(o=>o.id===s.typ);
+  const col = `var(--t-${s.typ})`;
+  const gap = raw - idx;   // ce que les corrections retirent à cette séance
+
+  const f = (k,v) => `<div class="ifield"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  box.innerHTML = `
+    <div class="inspect-head">
+      <span class="inspect-title">${dt.getDate()} ${MONTHS[dt.getMonth()]} ${dt.getFullYear()}
+        <span class="muted">· ${s.place}</span>
+        <span class="chip" style="color:${col}">${t ? t.label : s.typ}</span></span>
+      ${S.pinned !== null
+        ? `<span class="pin">verrouillée <button type="button" id="unpin">libérer</button></span>`
+        : `<span class="pin" style="color:var(--muted)">clique pour verrouiller</span>`}
+    </div>
+    <div class="igrid">
+      ${f("Distance", `${s.km} km`)}
+      ${f("Durée", `${Math.floor(s.min)}:${String(Math.round((s.min%1)*60)).padStart(2,"0")}`)}
+      ${f("Allure brute", `${pace(s.pace)} <small>/km</small>`)}
+      ${f("Allure ajustée", `${pace(s.adj)} <small>/km</small>`)}
+      ${f("FC moyenne", `${s.hr} <small>bpm · ${Math.round(hrr*100)} % FCR</small>`)}
+      ${f("Charge anaérobie", s.ante.toFixed(1))}
+      ${f("Température", `${s.t} <small>°C</small>`)}
+      ${f("Humidité", `${s.rh} <small>%</small>`)}
+      ${f("WBGT", `${s.wbgt} <small>°C</small>`)}
+      ${f("Altitude", `${s.alt} <small>m${s.altd ? ` · J+${s.altd}` : ""}</small>`)}
+      ${f("Indice corrigé", `${pace(idx)} <small>/km à ${M.hr_ref} bpm</small>`)}
+      ${f("Effet des corrections", isFinite(gap)
+            ? `${Math.abs(gap).toFixed(1)} <small>s/km plus ${gap>0?"rapide":"lente"}</small>`
+            : "—")}
+    </div>`;
+
+  const un = document.getElementById("unpin");
+  if(un) un.addEventListener("click", ()=>{ S.pinned=null; paintInspect(); redrawDots(); });
 }
 
 /* ---------- statique ---------- */
@@ -615,6 +826,13 @@ function boot(){
     ["… acclimatation", "effet subsistant après 14 jours", pct(P.acclim_res,1)+" ×"],
   ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
 
+  document.getElementById("zoomreset").addEventListener("click", resetZoom);
+  document.addEventListener("keydown", e=>{
+    if(e.key==="Escape"){
+      if(S.pinned!==null){ S.pinned=null; paintInspect(); redrawDots(); }
+      else resetZoom();
+    }
+  });
   render();
 }
 boot();
